@@ -1,4 +1,4 @@
-const { User, Book } = require('../models');
+const { User } = require('../models');
 const { AuthentificationError } = require('apollo-server-express');
 const { signToken } = require('../utils/auth');
 
@@ -27,8 +27,8 @@ const resolvers = {
                 throw new AuthentificationError('Incorrect credentials used!')
             }
 
-            const userPassword = await user.isCorrectPassword(password);
-            if (!userPassword) {
+            const correctPw = await user.isCorrectPassword(password);
+            if (!correctPw) {
                 throw new AuthentificationError('Incorrect credentials used!')
             }
             const token = signToken(user);

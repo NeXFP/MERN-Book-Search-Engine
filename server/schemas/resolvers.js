@@ -1,5 +1,5 @@
-const { User } = require('../models');
-const { AuthentificationError } = require('apollo-server-express');
+const { User, Book } = require('../models');
+const { AuthenticationError } = require('apollo-server-express');
 const { signToken } = require('../utils/auth');
 
 const resolvers = {
@@ -8,10 +8,11 @@ const resolvers = {
             if (context.user) {
                 const userData = await User.findOne({ _id: context.user._id })
                     .select('-__v -password')
+
                 return userData;
             }
-            throw new AuthentificationError('Not currently logged in!');
-        }
+            throw new AuthenticationError('Not currently logged in!');
+        },
     },
     Mutation: {
         addUser: async (parent, args) => {
@@ -24,16 +25,48 @@ const resolvers = {
             const user = await User.findOne({ email });
 
             if (!user) {
-                throw new AuthentificationError('Incorrect credentials used!')
+                throw new AuthenticationError('Incorrect credentials used!')
             }
 
             const correctPw = await user.isCorrectPassword(password);
             if (!correctPw) {
-                throw new AuthentificationError('Incorrect credentials used!')
+                throw new AuthenticationError('Incorrect credentials used!')
             }
             const token = signToken(user);
             return { token, user };
         },
+
+        saveBook: async (parent, {bookId, authors, description, title, image, link}, context) => {
+            if (context.user) {
+                const addBooks = await User.findOneAndUpdate(
+                    {_id: context.user._id},
+                    {$push: {savedBooks: {
+                        bookId,
+                        authors,
+                        description,
+                        title,
+                        image,
+                        link
+                    }}},
+                    { new: true, runValidators: true}
+                );
+                return addBooks;
+            }
+
+            throw new AuthenticationError('Not currently logged in!')
+        },
+
+        removeBook: async (parent, { bookId }, context) => {
+            if (context.user) {
+                const removeBooks = await User.findOneAndUpdate(
+                    {_id: context.user._id},
+                    {$pull: { savedBooks: {bookId: bookId}}},
+                    { new: true }
+                )
+                return removeBooks;
+            }
+            throw new AuthenticationError('Not currently logged in!')
+        }
 
     }
 };

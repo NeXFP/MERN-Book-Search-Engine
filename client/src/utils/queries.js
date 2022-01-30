@@ -8,13 +8,11 @@ export const PULL_ME = gql`
             email
             bookCount
             savedBooks {
-                _id
-                description
-                bookId
                 image
                 link
                 title
                 authors
+                bookId
             }
         }
     }
